@@ -1,0 +1,20 @@
+[project]
+name = "imageops-mcp-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncio>=3.4.3",
+    "fastmcp>=2.9.0",
+    "httpx>=0.28.1",
+    "ipykernel>=6.29.5",
+    "logging>=0.4.9.6",
+    "matplotlib>=3.10.3",
+    "mcp-use>=1.2.7",
+    "mcp[cli]==1.9.4",
+    "nest-asyncio>=1.6.0",
+    "opencv-contrib-python>=4.11.0.86",
+    "pillow>=11.2.1",
+    "ultralytics>=8.3.162",
+]
