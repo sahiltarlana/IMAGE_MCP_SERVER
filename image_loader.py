@@ -183,6 +183,7 @@ async def fetch_image(image_source: str, ctx: Context) -> Image | None:
 
         if is_url(image_source):
             async with httpx.AsyncClient() as client:
+                logger.debug(f"found a URL as image source ,URL:{image_source}")
                 result = await fetch_single_image(image_source, client, ctx)
         else:
             if not os.path.exists(image_source):
