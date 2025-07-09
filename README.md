@@ -68,7 +68,7 @@ Follow these steps to set up the project using `uv`:
 To start the FastMCP server, run the main script:
 
 ```bash
-python image_mcp_server.py
+uv run image_loader.py
 ```
 
 The server runs using the `stdio` transport, allowing it to process requests from compatible clients, such as Claude Desktop or custom scripts.
@@ -84,7 +84,7 @@ The `mcp dev` command (part of the `mcp` CLI) allows you to test the server's to
    In the project directory, activate the virtual environment and start the development tool:
    ```bash
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   mcp dev
+   mcp dev image_loader.py
    ```
 
 3. **Test Tools**:
@@ -129,64 +129,166 @@ The `mcp dev` command (part of the `mcp` CLI) allows you to test the server's to
    - Logs are saved in the `./data` directory (e.g., `09-07-25.log`).
    - Processed images are saved in the `./output` directory with timestamped filenames (e.g., `image_2025-07-09_171823.jpg`).
 
-## Using with Claude Desktop
+## Connecting to Claude Desktop
 
-To integrate the server with Claude Desktop for AI-driven image processing:
+To connect the `imageops-mcp-server` to Claude Desktop and use its tools:
 
 1. **Start the Server**:
-   Ensure the server is running:
+   Ensure the server is running in your project directory:
    ```bash
-   python image_mcp_server.py
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   uv run python image_mcp_server.py
    ```
 
 2. **Configure Claude Desktop**:
-   - In Claude Desktop, configure the FastMCP client to connect to the server via the `stdio` transport.
-   - Use Claude's interface to send requests to the server tools (e.g., `fetch_image`, `detect_objects_yolo`).
-   - Example request in Claude Desktop:
+   - Open Claude Desktop and navigate to **Settings** (typically found in the top navigation bar or menu).
+   - Go to **Features** > **MCP Servers**.
+   - Click **+ Add New MCP Server** to add a new server configuration.
+   - Enter the following configuration, replacing `/path/to/imageops-mcp-server` with the absolute path to your project directory:
      ```json
      {
-       "tool": "detect_objects_yolo",
-       "args": {
-         "image_source": "https://ultralytics.com/images/bus.jpg",
-         "save": true
+       "mcpServers": {
+         "imageops": {
+           "command": "uv",
+           "args": ["--directory", "/path/to/imageops-mcp-server", "run", "python", "image_mcp_server.py"]
+         }
        }
      }
      ```
+   - Save the configuration. Claude Desktop will use `uv` to run the server in the specified directory with the `stdio` transport.
 
-3. **View Results**:
-   - Claude Desktop will display the JSON response, including detection details or image data.
-   - Check the `./output` directory for saved images.
+3. **Interact with the Server**:
+   - In Claude Desktop's chat interface, you can send requests to the server by invoking its tools using natural language prompts or structured JSON.
+   - Claude Desktop will communicate with the server and display the results, such as JSON responses or references to saved images in the `./output` directory.
 
-## Using with Cursor
+4. **Sample Prompts**:
+   - **Fetch an Image**:
+     ```
+     Fetch the image from https://ultralytics.com/images/bus.jpg and process it.
+     ```
+     *Expected Response*: Returns an `Image` object or confirmation of processing, with the image saved in `./output`.
+   - **Detect Objects**:
+     ```
+     Perform object detection on https://ultralytics.com/images/bus.jpg using YOLOv8 and save the result.
+     ```
+     *Expected Response*: Returns a JSON dictionary with detected objects, bounding boxes, confidence scores, and the saved path of the annotated image.
+   - **Convert Image Format**:
+     ```
+     Convert https://ultralytics.com/images/bus.jpg to PNG format and save it.
+     ```
+     *Expected Response*: Returns an `Image` object in PNG format and confirms the saved path.
+   - **Segment Objects**:
+     ```
+     Segment objects in https://ultralytics.com/images/bus.jpg with 0.5 transparency and save the output.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the segmented image, detection details, and saved path.
+   - **Crop an Object**:
+     ```
+     Crop the region (100, 150, 200, 300) from https://ultralytics.com/images/bus.jpg and save it.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the cropped image and saved path.
+   - **Canny Edge Detection**:
+     ```
+     Apply Canny edge detection to https://ultralytics.com/images/bus.jpg with thresholds 100 and 200, and save the result.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the edge-detected image and saved path.
 
-Cursor, an AI-powered code editor, can be used to develop, test, and interact with the server:
+5. **View Results**:
+   - Claude Desktop will display the JSON response, including detection details, image data, or file paths.
+   - Check the `./output` directory for saved images (e.g., `image_2025-07-09_174523.jpg`).
+
+## Connecting to Cursor
+
+To connect the `imageops-mcp-server` to Cursor and use its tools:
 
 1. **Open the Project in Cursor**:
    - Launch Cursor and open the `imageops-mcp-server` project directory.
-   - Cursor will detect the `project.toml` file and suggest setting up the environment using `uv`.
+   - Cursor will detect the `project.toml` file and prompt you to set up the environment using `uv`. Follow the prompt or manually run:
+     ```bash
+     uv venv
+     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+     uv pip install .
+     ```
 
-2. **Run and Debug**:
-   - Use Cursor's terminal to run the server (`python image_mcp_server.py`).
-   - Leverage Cursor's AI features to debug code, add new tools, or modify existing ones.
+2. **Configure Cursor**:
+   - Open Cursor and go to **Settings** (Navbar > **Cursor Settings**).
+   - Navigate to **Features** >.mob
+   - Click **+ Add New MCP Server**.
+   - Add the following configuration, replacing `/path/to/imageops-mcp-server` with the absolute path to your project directory:
+     ```json
+     {
+       "mcpServers": {
+         "imageops": {
+           "command": "uv",
+           "args": ["--directory", "/path/to/imageops-mcp-server", "run", "python", "image_mcp_server.py"]
+         }
+       }
+     }
+     ```
+   - Save the configuration. This allows Cursor to communicate with the server via `stdio`.
 
-3. **Test Tools**:
-   - Create a test script in Cursor to call the server tools programmatically:
+3. **Interact with the Server**:
+   - Use Cursor's chat interface or a test script to send requests to the server.
+   - Alternatively, create a Python script in Cursor to call tools programmatically:
      ```python
      from mcp.client import AsyncClient
      import asyncio
 
      async def test_tools():
          async with AsyncClient(transport='stdio') as client:
-             result = await client.call_tool('fetch_image', {'image_source': 'https://ultralytics.com/images/bus.jpg'})
-             print(result)
+             result = await client.call_tool('detect_objects_yolo', {
+                 'image_source': 'https://ultralytics.com/images/bus.jpg',
+                 'save': True
+             })
+             client.write(result)
 
      asyncio.run(test_tools())
      ```
-   - Run the script in Cursor to verify tool functionality.
+   - Run the script in Cursor's terminal to test server functionality.
 
-4. **AI Assistance**:
-   - Use Cursor's AI features to generate additional tools, optimize code, or document functions.
-   - For example, ask Cursor to "Add a new tool for image rotation" to extend the server.
+4. **Sample Prompts**:
+   - **Fetch an Image**:
+     ```
+     Please fetch and process the image from https://ultralytics.com/images/bus.jpg.
+     ```
+     *Expected Response*: Cursor's AI will trigger the `fetch_image` tool and return the processed image data or a confirmation.
+   - **Object Detection**:
+     ```
+     Detect objects in https://ultralytics.com/images/bus.jpg using YOLOv8 and save the annotated image.
+     ```
+     *Expected Response*: Returns a JSON response with detection details and the path to the saved annotated image.
+   - **Image Conversion**:
+     ```
+     Convert https://ultralytics.com/images/bus.jpg to GIF format and save it.
+     ```
+     *Expected Response*: Confirms conversion to GIF and provides the saved path.
+   - **Object Segmentation**:
+     ```
+     Segment objects in https://ultralytics.com/images/bus.jpg with 0.7 transparency and save the result.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the segmented image, detections, and saved path.
+   - **Crop an Object**:
+     ```
+     Crop the region (x_min: 100, y_min: 150, x_max: 200, y_max: 300) from https://ultralytics.com/images/bus.jpg and save it.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the cropped image and saved path.
+   - **Canny Edge Detection**:
+     ```
+     Perform Canny edge detection on https://ultralytics.com/images/bus.jpg with thresholds 50 and 150, and save the output.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the edge-detected image and saved path.
+
+5. **AI Assistance**:
+   - Use Cursor's AI chat to generate new tools or optimize existing code. For example, prompt:
+     ```
+     Add a new MCP tool to rotate images by a specified angle.
+     ```
+     Cursor's AI can generate the code, which you can add to `image_mcp_server.py`.
+
+6. **View Results**:
+   - Cursor will display the JSON response or script output in the terminal or chat interface.
+   - Check the `./output` directory for saved images.
+
 
 ## Project Structure
 
