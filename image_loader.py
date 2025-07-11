@@ -14,6 +14,8 @@ from mcp.server.fastmcp import FastMCP, Image, Context
 from ultralytics import YOLO
 import numpy as np
 import cv2
+import time
+from datetime import datetime
 
 TEMP_DIR = "./Temp"
 DATA_DIR = "./data"
@@ -222,14 +224,13 @@ async def get_image_dimensions_and_save(image_source: str, ctx: Context) -> dict
         >>> result = await get_image_dimensions_and_save("https://example.com/image.jpg", ctx)
         >>> print(result)
         {'width': 800, 'height': 600, 'saved_path': './output/image_2025-07-06_211823.jpg'}
-
-    Notes:
-        - The image is saved in JPEG format to the 'output' directory with a timestamped filename.
-        - If the image is too large (>1MB), it is compressed using the same logic as `process_image_data`.
-        - The tool handles both local files and remote images via HTTP/HTTPS.
-        - Errors during processing (e.g., invalid URL, file not found, or processing failure) are logged
-          and reported via the context object, returning None.
     """
+    # Notes:
+    #     - The image is saved in JPEG format to the 'output' directory with a timestamped filename.
+    #     - If the image is too large (>1MB), it is compressed using the same logic as `process_image_data`.
+    #     - The tool handles both local files and remote images via HTTP/HTTPS.
+    #     - Errors during processing (e.g., invalid URL, file not found, or processing failure) are logged
+    #       and reported via the context object, returning None.
     try:
         start_time = asyncio.get_event_loop().time()
         logger.debug(f"Processing image for dimensions and save: {image_source}")
@@ -309,13 +310,13 @@ async def convert_image_format(image_source: str, target_format: str, ctx: Conte
         >>> result = await convert_image_format("https://example.com/image.png", "jpeg", save=True, ctx)
         >>> print(result.format)
         'jpeg'
+    """ 
 
-    Notes:
-        - Supported formats are JPEG, PNG, and GIF.
-        - Images are compressed to stay under 1MB, consistent with existing processing logic.
-        - The saved image filename includes a timestamp to avoid overwrites.
-        - Errors (e.g., unsupported format, invalid source) are logged and reported via the context.
-    """
+    # Notes:
+    #     - Supported formats are JPEG, PNG, and GIF.
+    #     - Images are compressed to stay under 1MB, consistent with existing processing logic.
+    #     - The saved image filename includes a timestamp to avoid overwrites.
+    #     - Errors (e.g., unsupported format, invalid source) are logged and reported via the context.
     try:
         start_time = asyncio.get_event_loop().time()
         logger.debug(f"Converting image from {image_source} to {target_format}")
@@ -432,14 +433,13 @@ async def detect_objects_yolo(image_source: str, ctx: Context,save: bool = False
                 'confidence_description': 'Confidence scores (0.0 to 1.0) indicate the model’s certainty that the detection is correct; higher is more confident.'
             }
         }
-
-    Notes:
-        - Requires the `ultralytics` library (`pip install ultralytics`) for YOLOv8.
-        - Uses the lightweight 'yolov8n' model for efficiency.
-        - Images are processed using existing compression logic to ensure compatibility.
-        - The saved image is the original input image, not the annotated output, to maintain consistency with other tools.
-        - Errors (e.g., invalid image, model failure) are logged and reported via the context.
     """
+    # Notes:
+    #     - Requires the `ultralytics` library (`pip install ultralytics`) for YOLOv8.
+    #     - Uses the lightweight 'yolov8n' model for efficiency.
+    #     - Images are processed using existing compression logic to ensure compatibility.
+    #     - The saved image is the original input image, not the annotated output, to maintain consistency with other tools.
+    #     - Errors (e.g., invalid image, model failure) are logged and reported via the context.
     try:
         start_time = asyncio.get_event_loop().time()
         logger.debug(f"Performing object detection on: {image_source}")
@@ -720,16 +720,15 @@ async def segment_objects_yolo(image_source: str, ctx: Context,alpha: float = 0.
             'saved_path': './output/segmented_image_2025-07-08_113423.jpg',
             'explanation': 'Segmented 2 objects from https://ultralytics.com/images/bus.jpg with alpha=0.5 and saved to output directory.'
         }
-
-    Notes:
-        - Requires `ultralytics` (`pip install ultralytics`), `numpy` (`pip install numpy`), and `opencv-python` (`pip install opencv-python`) for segmentation and image processing.
-        - Uses the preloaded 'yolo11n-seg.pt' model for efficiency.
-        - The segmented image includes colored masks overlaid on detected objects with the specified transparency.
-        - Bounding box coordinates and mask areas are provided for compatibility with `crop_the_object` tool.
-        - Errors (e.g., invalid image, model failure, timeouts) are logged and reported via the context.
-        - The saved image is in JPEG format with quality=85, consistent with other tools.
-        - The alpha parameter must be in the range [0.0, 1.0]; values outside this range are clamped.
     """
+    # Notes:
+    #     - Requires `ultralytics` (`pip install ultralytics`), `numpy` (`pip install numpy`), and `opencv-python` (`pip install opencv-python`) for segmentation and image processing.
+    #     - Uses the preloaded 'yolo11n-seg.pt' model for efficiency.
+    #     - The segmented image includes colored masks overlaid on detected objects with the specified transparency.
+    #     - Bounding box coordinates and mask areas are provided for compatibility with `crop_the_object` tool.
+    #     - Errors (e.g., invalid image, model failure, timeouts) are logged and reported via the context.
+    #     - The saved image is in JPEG format with quality=85, consistent with other tools.
+    #     - The alpha parameter must be in the range [0.0, 1.0]; values outside this range are clamped.
     try:
         start_time = asyncio.get_event_loop().time()
         logger.debug(f"Starting object segmentation on: {image_source}, alpha: {alpha}")
@@ -898,15 +897,14 @@ async def canny_edge_detection(image_source: str,  ctx: Context,threshold1: int 
             'saved_path': './output/canny_image_2025-07-08_113423.jpg',
             'explanation': 'Applied Canny edge detection to https://ultralytics.com/images/bus.jpg with thresholds (100, 200) and saved to output directory.'
         }
-
-    Notes:
-        - Requires `opencv-python` (`pip install opencv-python`), `numpy` (`pip install numpy`), and `PIL` for image processing.
-        - The Canny algorithm converts the image to grayscale before edge detection, producing a single-channel output.
-        - Threshold values are clamped to the range [0, 255] to ensure compatibility with OpenCV.
-        - The saved image is in JPEG format with quality=85, consistent with other tools.
-        - Errors (e.g., invalid image, invalid thresholds, save failures) are logged and reported via the context.
-        - Can be used in conjunction with `segment_objects_yolo` or `detect_objects_yolo` for preprocessing or postprocessing.
     """
+    # Notes:
+    #     - Requires `opencv-python` (`pip install opencv-python`), `numpy` (`pip install numpy`), and `PIL` for image processing.
+    #     - The Canny algorithm converts the image to grayscale before edge detection, producing a single-channel output.
+    #     - Threshold values are clamped to the range [0, 255] to ensure compatibility with OpenCV.
+    #     - The saved image is in JPEG format with quality=85, consistent with other tools.
+    #     - Errors (e.g., invalid image, invalid thresholds, save failures) are logged and reported via the context.
+    #     - Can be used in conjunction with `segment_objects_yolo` or `detect_objects_yolo` for preprocessing or postprocessing.
     try:
         start_time = asyncio.get_event_loop().time()
         logger.debug(f"Starting Canny edge detection on: {image_source}, threshold1: {threshold1}, threshold2: {threshold2}")
@@ -983,6 +981,242 @@ async def canny_edge_detection(image_source: str,  ctx: Context,threshold1: int 
         ctx.error(f"Failed to perform Canny edge detection: {str(e)}")
         logger.error(f"Error in canny_edge_detection: {str(e)}")
         return None
+
+@mcp.tool()
+async def create_thumbnail(image_source: str, size: int, ctx: Context, save: bool = True) -> dict | None:
+    """
+    Create a thumbnail of an image with a specified square size, maintaining aspect ratio.
+
+    Args:
+        image_source (str): A URL (http:// or https://) or local file path pointing to the image.
+        size (int): The desired width and height of the thumbnail (in pixels, e.g., 128 for 128x128).
+        ctx (Context): The MCP context object for error reporting.
+        save (bool): Whether to save the thumbnail to the output directory (default: True).
+
+    Returns:
+        dict | None: A dictionary containing the thumbnail image, saved path, dimensions, and explanation,
+                     or None if processing fails.
+    """
+    try:
+        start_time = asyncio.get_event_loop().time()
+        logger.debug(f"Creating thumbnail for {image_source} with size {size}x{size}")
+
+        # Validate input parameters
+        if not image_source:
+            ctx.error("No image source provided")
+            logger.error("No image source provided")
+            return None
+        size = max(16, min(512, int(size)))  # Clamp size to reasonable range
+        logger.debug(f"Using thumbnail size: {size}x{size}")
+
+        # Fetch or process the image
+        fetch_start = time.time()
+        if is_url(image_source):
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                image = await fetch_single_image(image_source, client, ctx)
+        else:
+            if not os.path.exists(image_source):
+                ctx.error(f"File not found: {image_source}")
+                logger.error(f"File not found: {image_source}")
+                return None
+            image = await process_image_data(image_source, ctx=ctx)
+        logger.debug(f"Image fetching/processing took {time.time() - fetch_start:.2f} seconds")
+
+        if image is None:
+            ctx.error(f"Failed to process image from {image_source}")
+            logger.error(f"Failed to process image from {image_source}")
+            return None
+
+        # Create thumbnail
+        thumbnail_start = time.time()
+        try:
+            with PILImage.open(BytesIO(image.data)) as img:
+                # Convert to RGB if necessary
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+                    logger.debug(f"Converted image mode to RGB for thumbnail")
+                
+                # Calculate thumbnail dimensions while maintaining aspect ratio
+                img.thumbnail((size, size), PILImage.LANCZOS)
+                width, height = img.size
+                logger.debug(f"Thumbnail dimensions: {width}x{height}")
+
+                # Save thumbnail to BytesIO
+                img_byte_arr = BytesIO()
+                img.save(img_byte_arr, format='JPEG', quality=85)
+                thumbnail_data = img_byte_arr.getvalue()
+                logger.debug(f"Created thumbnail, size: {len(thumbnail_data)} bytes")
+        except Exception as e:
+            ctx.error(f"Failed to create thumbnail: {str(e)}")
+            logger.error(f"Thumbnail creation error: {str(e)}")
+            return None
+        logger.debug(f"Thumbnail creation took {time.time() - thumbnail_start:.2f} seconds")
+
+        # Save thumbnail if requested
+        saved_path = None
+        if save:
+            save_start = time.time()
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            filename = f"thumbnail_{timestamp}.jpg"
+            saved_path = os.path.join(OUTPUT_DIR, filename)
+            try:
+                with open(saved_path, "wb") as f:
+                    f.write(thumbnail_data)
+                logger.debug(f"Saved thumbnail to {saved_path} in {time.time() - save_start:.2f} seconds")
+            except Exception as e:
+                ctx.error(f"Failed to save thumbnail to {saved_path}: {str(e)}")
+                logger.error(f"Save error: {str(e)}")
+                saved_path = None
+
+        # Prepare result dictionary
+        result_dict = {
+            "thumbnail_image": Image(data=thumbnail_data, format='jpeg'),
+            "width": width,
+            "height": height,
+            "saved_path": saved_path if saved_path else "Not saved",
+            "explanation": f"Created a {width}x{height} thumbnail from {image_source} with target size {size}x{size} and saved to output directory."
+        }
+
+        elapsed = time.time() - start_time
+        logger.debug(f"Thumbnail creation completed for {image_source} in {elapsed:.2f} seconds")
+        return result_dict
+
+    except Exception as e:
+        ctx.error(f"Failed to create thumbnail: {str(e)}")
+        logger.error(f"Error in create_thumbnail: {str(e)}")
+        return None
+
+@mcp.tool()
+async def apply_image_filters(image_source: str, filter_type: str, ctx: Context, intensity: float = 1.0, save: bool = True) -> dict | None:
+    """
+    Apply various filters to an image (blur, sharpen, enhance, vintage) with adjustable intensity.
+
+    Args:
+        image_source (str): A URL (http:// or https://) or local file path pointing to the image.
+        filter_type (str): The filter to apply ('blur', 'sharpen', 'enhance', 'vintage').
+        ctx (Context): The MCP context object for error reporting.
+        intensity (float): Intensity of the filter effect (0.0 to 2.0, default: 1.0).
+        save (bool): Whether to save the filtered image to the output directory (default: True).
+
+    Returns:
+        dict | None: A dictionary containing the filtered image, saved path, and explanation,
+                     or None if processing fails.
+    """
+    try:
+        start_time = time.time()
+        logger.debug(f"Applying filter '{filter_type}' to {image_source} with intensity {intensity}")
+
+        # Validate input parameters
+        if not image_source:
+            ctx.error("No image source provided")
+            logger.error("No image source provided")
+            return None
+        filter_type = filter_type.lower()
+        supported_filters = {'blur', 'sharpen', 'enhance', 'vintage'}
+        if filter_type not in supported_filters:
+            ctx.error(f"Unsupported filter type: {filter_type}. Supported filters: {', '.join(supported_filters)}")
+            logger.error(f"Unsupported filter type: {filter_type}")
+            return None
+        intensity = max(0.0, min(2.0, float(intensity)))  # Clamp intensity to 0.0-2.0
+        logger.debug(f"Using filter: {filter_type}, intensity: {intensity}")
+
+        # Fetch or process the image
+        fetch_start = time.time()
+        if is_url(image_source):
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                image = await fetch_single_image(image_source, client, ctx)
+        else:
+            if not os.path.exists(image_source):
+                ctx.error(f"File not found: {image_source}")
+                logger.error(f"File not found: {image_source}")
+                return None
+            image = await process_image_data(image_source, ctx=ctx)
+        logger.debug(f"Image fetching/processing took {time.time() - fetch_start:.2f} seconds")
+
+        if image is None:
+            ctx.error(f"Failed to process image from {image_source}")
+            logger.error(f"Failed to process image from {image_source}")
+            return None
+
+        # Apply the selected filter
+        filter_start = time.time()
+        try:
+            img_np = np.array(PILImage.open(BytesIO(image.data)))
+            if img_np.shape[2] == 4:  # Convert RGBA to RGB
+                img_np = cv2.cvtColor(img_np, cv2.COLOR_RGBA2RGB)
+                logger.debug(f"Converted image to RGB for filtering")
+
+            if filter_type == 'blur':
+                # Apply Gaussian blur with kernel size based on intensity
+                kernel_size = max(3, int(3 * intensity) | 1)  # Ensure odd kernel size
+                filtered_img = cv2.GaussianBlur(img_np, (kernel_size, kernel_size), sigmaX=intensity)
+                logger.debug(f"Applied Gaussian blur with kernel size {kernel_size} and sigma {intensity}")
+            elif filter_type == 'sharpen':
+                # Apply sharpening filter
+                kernel = np.array([[-intensity, -intensity, -intensity],
+                                  [-intensity,  1 + 8*intensity, -intensity],
+                                  [-intensity, -intensity, -intensity]])
+                filtered_img = cv2.filter2D(img_np, -1, kernel)
+                logger.debug(f"Applied sharpening filter with intensity {intensity}")
+            elif filter_type == 'enhance':
+                # Enhance contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization)
+                img_lab = cv2.cvtColor(img_np, cv2.COLOR_RGB2LAB)
+                clahe = cv2.createCLAHE(clipLimit=intensity * 2.0, tileGridSize=(8, 8))
+                img_lab[:, :, 0] = clahe.apply(img_lab[:, :, 0])
+                filtered_img = cv2.cvtColor(img_lab, cv2.COLOR_LAB2RGB)
+                logger.debug(f"Applied contrast enhancement with intensity {intensity}")
+            elif filter_type == 'vintage':
+                # Apply sepia tone for vintage effect
+                kernel = np.array([[0.272, 0.534, 0.131],
+                                  [0.349, 0.686, 0.168],
+                                  [0.393, 0.769, 0.189]]) * intensity
+                filtered_img = cv2.transform(img_np, kernel)
+                filtered_img = np.clip(filtered_img, 0, 255).astype(np.uint8)
+                logger.debug(f"Applied vintage sepia effect with intensity {intensity}")
+
+            # Convert filtered image to Image object
+            filtered_pil = PILImage.fromarray(filtered_img)
+            img_byte_arr = BytesIO()
+            filtered_pil.save(img_byte_arr, format='JPEG', quality=85)
+            filtered_data = img_byte_arr.getvalue()
+            logger.debug(f"Filter application took {time.time() - filter_start:.2f} seconds")
+        except Exception as e:
+            ctx.error(f"Failed to apply filter '{filter_type}': {str(e)}")
+            logger.error(f"Filter application error: {str(e)}")
+            return None
+
+        # Save filtered image if requested
+        saved_path = None
+        if save:
+            save_start = time.time()
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            filename = f"filtered_{filter_type}_{timestamp}.jpg"
+            saved_path = os.path.join(OUTPUT_DIR, filename)
+            try:
+                with open(saved_path, "wb") as f:
+                    f.write(filtered_data)
+                logger.debug(f"Saved filtered image to {saved_path} in {time.time() - save_start:.2f} seconds")
+            except Exception as e:
+                ctx.error(f"Failed to save filtered image to {saved_path}: {str(e)}")
+                logger.error(f"Save error: {str(e)}")
+                saved_path = None
+
+        # Prepare result dictionary
+        result_dict = {
+            "filtered_image": Image(data=filtered_data, format='jpeg'),
+            "saved_path": saved_path if saved_path else "Not saved",
+            "explanation": f"Applied {filter_type} filter to {image_source} with intensity {intensity} and saved to output directory."
+        }
+
+        elapsed = time.time() - start_time
+        logger.debug(f"Filter '{filter_type}' application completed for {image_source} in {elapsed:.2f} seconds")
+        return result_dict
+
+    except Exception as e:
+        ctx.error(f"Failed to apply filter: {str(e)}")
+        logger.error(f"Error in apply_image_filters: {str(e)}")
+        return None
+
 
 
 
