@@ -13,6 +13,9 @@
 - **Logging**: Comprehensive logging to both console and file with timestamped logs for debugging and monitoring.
 - **Directory Management**: Automatically creates necessary directories (`data`, `Temp`, `output`) for logs and processed images.
 - **Integration Ready**: Designed for use with AI tools like Claude Desktop and Cursor for seamless workflow integration.
+- **Thumbnail Creation**: Generate square thumbnails with a specified size, maintaining aspect ratio.
+- **Image Filters**: Apply blur, sharpen, enhance, or vintage effects with adjustable intensity.
+- **3D Point Cloud Generation**: Create a 3D point cloud from a 2D image using Depth-Anything-V2-Small-hf for depth estimation.
 
 ## Prerequisites
 
@@ -124,6 +127,22 @@ The `mcp dev` command (part of the `mcp` CLI) allows you to test the server's to
      canny_edge_detection "https://ultralytics.com/images/bus.jpg" 100 200 true
      ```
      Applies Canny edge detection with specified thresholds.
+   - **Thumbnail Creation**:
+     ```bash
+     create_thumbnail "https://ultralytics.com/images/bus.jpg" 128 true
+     ```
+     Create a thumbnail for the image.
+   - **Image Filters**:
+     ```bash
+     apply_image_filters "https://ultralytics.com/images/bus.jpg" blur 1 true
+     ```
+     Apply image filters on the image.
+   - **3D Point Cloud Generation**:
+     ```bash
+     generate_3d_point_cloud "https://ultralytics.com/images/bus.jpg" true false
+     ```
+     Generate a 3D .pyl file of the image.  
+       
 
 4. **Check Outputs**:
    - Logs are saved in the `./data` directory (e.g., `09-07-25.log`).
@@ -192,6 +211,25 @@ To connect the `imageops-mcp-server` to Claude Desktop and use its tools:
      Apply Canny edge detection to https://ultralytics.com/images/bus.jpg with thresholds 100 and 200, and save the result.
      ```
      *Expected Response*: Returns a JSON dictionary with the edge-detected image and saved path.
+   - **Create Thumbnail**:
+     ```
+     Create a 128x128 thumbnail from https://ultralytics.com/images/bus.jpg and save it.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the thumbnail image, dimensions, and saved path.
+
+   - **Apply Image Filter**:
+     ```
+     Apply a blur filter with intensity 1.0 to https://ultralytics.com/images/bus.jpg and save the result.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the filtered image and saved path.
+
+
+   - **Generate 3D Point Cloud**:
+     ```
+     Generate a 3D point cloud from https://ultralytics.com/images/bus.jpg and save it as a .ply file.
+     ```
+     *Expected Response*: Returns a JSON dictionary with the point cloud data and saved .ply file path.
+    
 
 5. **View Results**:
    - Claude Desktop will display the JSON response, including detection details, image data, or file paths.
@@ -277,6 +315,25 @@ To connect the `imageops-mcp-server` to Cursor and use its tools:
      Perform Canny edge detection on https://ultralytics.com/images/bus.jpg with thresholds 50 and 150, and save the output.
      ```
      *Expected Response*: Returns a JSON dictionary with the edge-detected image and saved path.
+   - **Create Thumbnail**:
+     ```
+     Create a 128x128 thumbnail from https://ultralytics.com/images/bus.jpg and save it.
+     ```
+     *Expected Response*: Cursor’s AI triggers the `create_thumbnail` tool, returning the thumbnail data and saved path.
+
+   - **Apply Image Filter**:
+     ```
+     Apply a vintage filter with intensity 1.0 to https://ultralytics.com/images/bus.jpg and save it.
+     ```
+     *Expected Response*: Returns a JSON response with the filtered image and saved path.
+
+   - **Generate 3D Point Cloud**:
+     ```
+     Generate a 3D point cloud from https://ultralytics.com/images/bus.jpg and save it as a .ply file.
+     ```
+     *Expected Response*: Returns a JSON response with the point cloud data and saved .ply file path.
+
+    
 
 5. **AI Assistance**:
    - Use Cursor's AI chat to generate new tools or optimize existing code. For example, prompt:
@@ -313,6 +370,9 @@ The project relies on the following Python packages (specified in `project.toml`
 - `pillow>=11.2.1`: For image manipulation (cropping, format conversion).
 - `ultralytics>=8.3.162`: For YOLOv8 and YOLOv11 models.
 - `mcp[cli]==1.9.4`: For the MCP CLI and development tools.
+- `transformers>=4.47.0`: For depth estimation in 3D point cloud generation.
+- `open3d>=0.18.0`: For point cloud creation and visualization.
+- `tenacity>=9.0.0`: For retry logic in URL fetching.
 - Others: `ipykernel`, `logging`, `matplotlib`, `nest-asyncio`, `mcp-use`.
 
 ## Troubleshooting
@@ -322,6 +382,9 @@ The project relies on the following Python packages (specified in `project.toml`
 - **File Not Found**: Verify that the image source path or URL is correct and accessible.
 - **Permission Errors**: Ensure write permissions for the `data`, `Temp`, and `output` directories.
 - **Timeout Errors**: For URL-based images, check network connectivity or increase the `httpx` timeout in the code.
+ **Color Issues**: Fixed RGB/BGR conversion in `apply_image_filters` to prevent color swaps (e.g., red appearing as blue).
+- **PIL Errors**: Corrected invalid mode argument in `apply_image_filters` for `PILImage.fromarray`, resolving 'argument 1 must be str, not int' error.
+- **Depth Model Errors**: Ensure `transformers` and `open3d` are installed for `generate_3d_point_cloud`. If the Depth-Anything model fails to load, check network connectivity or reinstall `transformers`.
 
 ## Contributing
 
